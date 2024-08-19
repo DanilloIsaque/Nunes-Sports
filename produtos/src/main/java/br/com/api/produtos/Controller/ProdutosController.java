@@ -1,6 +1,7 @@
 package br.com.api.produtos.Controller;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -38,10 +39,14 @@ public class ProdutosController {
         return ResponseEntity.ok(produtos);
     }
         @DeleteMapping("/excluir")
-        public ResponseEntity<MensagemDTO> excluir(@RequestParam Long id) {
-            MensagemDTO mensagem = service.excluirProduto(id);
-            return new ResponseEntity<>(mensagem, mensagem.getMensagem().equals("Produto Excluído com sucesso.") ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND);
-        }
+        public ResponseEntity<MensagemDTO> excluir(@RequestParam Integer codigo) {
+    try {
+        MensagemDTO mensagem = service.excluirProduto(codigo);
+        return new ResponseEntity<>(mensagem, HttpStatus.NO_CONTENT); 
+    } catch (NoSuchElementException e) {
+        return new ResponseEntity<>(new MensagemDTO(null,e.getMessage()), HttpStatus.NOT_FOUND);
+    }
+}
     
     
 }

@@ -10,7 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProdutoDTO {
-    private Long codigo;
+    private Integer codigo;
     private String nome;
     private String descricao;
     private Double preco;

@@ -13,22 +13,22 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@Table(name="Produtos")
+@Table(name="produtos")
 @NoArgsConstructor
 public class Produto {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="codigo")
-    private Long codigo;
+    @Column(name="codigo_do_produto")
+    private Integer codigo;
 
-    @Column(name="nome")
+    @Column(name="nome_do_produto")
     private String nome;
 
-    @Column(name="descricao")
+    @Column(name="descricao_do_produto")
     private String descricao;
 
-    @Column(name="preco")
+    @Column(name="preco_do_produto")
     private Double preco;
 
 }

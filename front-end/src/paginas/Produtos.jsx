@@ -10,30 +10,25 @@ const Produtos = () => {
   const [records, setRecords] = useState([]);
   const [showCadastrar, setShowCadastrar] = useState(false);
   const [showAlterar, setShowAlterar] = useState(false);
-
+  const [showExcluir, setShowExcluir] = useState(false);
+  const [produtoExcluir, setProdutoExcluir] = useState(null);
   const [newProduto, setNewProduto] = useState({
-   nome:'',
-   descricao:'',
-   preco:''
+    nome: '',
+    descricao: '',
+    preco: ''
   });
   const [editProduto, setEditProduto] = useState({
     codigo: '',
-    nome:'',
-   descricao:'',
-   preco:''
+    nome: '',
+    descricao: '',
+    preco: ''
   });
-
   const [alertMessage, setAlertMessage] = useState('');
   const [alertVariant, setAlertVariant] = useState('success');
   const [showAlert, setShowAlert] = useState(false);
 
-  const [produtos, setProdutos] = useState([]);
-
   useEffect(() => {
-    fetch("http://localhost:8080/produto/listar")
-      .then(response => response.json())
-      .then(data => setProdutos(data))
-      .catch(error => console.error('Error fetching produtos:', error));
+    buscarProdutos();
   }, []);
 
   useEffect(() => {
@@ -47,10 +42,6 @@ const Produtos = () => {
     }
   }, [alertMessage]);
 
-  useEffect(() => {
-    buscarProdutos();
-  }, []);
-
   const buscarProdutos = () => {
     fetch("http://localhost:8080/produto/listar")
       .then(response => response.json())
@@ -59,10 +50,15 @@ const Produtos = () => {
   };
 
   function handleFilter(event) {
-    const newData = records.filter(row => {
-      return row.descricao.toLocaleLowerCase().includes(event.target.value.toLocaleLowerCase());
-    });
-    setRecords(newData);
+    const query = event.target.value.toLowerCase();
+    if (query === '') {
+      buscarProdutos(); // Recarregar todos os produtos se o campo de pesquisa estiver vazio
+    } else {
+      const newData = records.filter(row =>
+        row.descricao.toLowerCase().includes(query)
+      );
+      setRecords(newData);
+    }
   }
 
   const handleNovoProduto = () => {
@@ -74,47 +70,69 @@ const Produtos = () => {
     setShowAlterar(true);
   }
 
-
   const handleClose = () => {
     setShowCadastrar(false);
     setNewProduto({
-        nome:'',
-       descricao:'',
-       preco:''
+      nome: '',
+      descricao: '',
+      preco: ''
     });
     setAlertMessage('');
   }
 
   const handleCloseAlterar = () => {
     setShowAlterar(false);
-    setNewProduto({
-        nome:'',
-       descricao:'',
-       preco:''
+    setEditProduto({
+      codigo: '',
+      nome: '',
+      descricao: '',
+      preco: ''
     });
     setAlertMessage('');
   }
 
+  const handleCloseDelete = () => {
+    setShowExcluir(false);
+    setProdutoExcluir(null);
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'preco') {
+      if (parseFloat(value) > 99999999.99) {
+        return;
+      }
+    }
     setNewProduto(prevState => ({
       ...prevState,
       [name]: value
     }));
   }
 
-
   const handleChangeEdit = (e) => {
     const { name, value } = e.target;
+    if (name === 'preco') {
+      if (parseFloat(value) > 99999999.99) {
+        return;
+      }
+    }
     setEditProduto(prevState => ({
       ...prevState,
       [name]: value
     }));
   };
 
-
-
   const salvar = () => {
+
+    if (!newProduto.nome || !newProduto.descricao || !newProduto.preco) {
+      setShowCadastrar(false);
+      setAlertVariant('danger');
+      setAlertMessage('Todos os campos são obrigatórios.');
+      setShowAlert(true);
+      return;
+    }
+  
+
     fetch('http://localhost:8080/produto/salvar', {
       method: 'POST',
       headers: {
@@ -127,23 +145,31 @@ const Produtos = () => {
           setAlertVariant('success');
           setAlertMessage('Produto cadastrado com sucesso!');
           buscarProdutos();
-          setShowCadastrar(false); // Fechar modal após o cadastro
+          setShowCadastrar(false);
         } else {
           setAlertVariant('danger');
           setAlertMessage('Erro ao cadastrar produto. Por favor, tente novamente.');
-          setShowCadastrar(false); // Fechar modal após o erro
-          console.error('Erro ao salvar o produto. Status:', response.status);
         }
       })
       .catch(error => {
         setAlertVariant('danger');
         setAlertMessage('Erro ao cadastrar produto. Por favor, tente novamente.');
         console.error('Erro ao salvar o produto:', error);
-        setShowCadastrar(false); // Fechar modal após o erro
+      })
+      .finally(() => {
+        setShowCadastrar(false);
       });
   }
 
   const alterar = () => {
+    if (!editProduto.nome || !editProduto.descricao || !editProduto.preco) {
+      setShowAlterar(false);
+      setAlertVariant('danger');
+      setAlertMessage('Todos os campos são obrigatórios.');
+      setShowAlert(true);
+      return;
+    }
+  
     fetch('http://localhost:8080/produto/salvar', {
       method: 'POST',
       headers: {
@@ -156,56 +182,51 @@ const Produtos = () => {
           setAlertVariant('success');
           setAlertMessage('Produto alterado com sucesso!');
           buscarProdutos();
-          setShowAlterar(false); // Fechar modal após o cadastro
+          setShowAlterar(false);
         } else {
           setAlertVariant('danger');
           setAlertMessage('Erro ao alterar produto. Por favor, tente novamente.');
-          setShowAlterar(false); // Fechar modal após o erro
-          console.error('Erro ao alterar o produto. Status:', response.status);
         }
       })
       .catch(error => {
         setAlertVariant('danger');
         setAlertMessage('Erro ao alterar produto. Por favor, tente novamente.');
         console.error('Erro ao alterar o produto:', error);
-        setShowAlterar(false); // Fechar modal após o erro
+      })
+      .finally(() => {
+        setShowAlterar(false);
       });
   }
 
-
-
-  const excluir = (id) => {
-
-    console.log("Excluindo", id);
-
-    fetch(`http://localhost:8080/produto/excluir?id=${id}`, {
+  const excluir = () => {
+    fetch(`http://localhost:8080/produto/excluir?codigo=${produtoExcluir}`, {
       method: 'DELETE'
     })
       .then(response => {
         if (response.ok) {
           setAlertVariant('success');
           setAlertMessage('Produto excluído com sucesso!');
-          setShowAlert(true);
           buscarProdutos(); // Atualizar a lista após a exclusão
         } else {
           setAlertVariant('danger');
           setAlertMessage('Erro ao excluir produto. Por favor, tente novamente.');
-          setShowAlert(true);
         }
       })
       .catch(error => {
-        console.error('Erro ao excluir produto:', error);
         setAlertVariant('danger');
         setAlertMessage('Erro ao excluir produto. Por favor, tente novamente.');
-        setShowAlert(true);
+        console.error('Erro ao excluir produto:', error);
       })
       .finally(() => {
-        setShowCadastrar(false);
+        setShowExcluir(false); 
+        setProdutoExcluir(null);
       });
   }
 
-
-
+  const handleShowExcluir = (codigo) => {
+    setProdutoExcluir(codigo);
+    setShowExcluir(true);
+  }
 
   const paginationComponentOptions = {
     rowsPerPageText: 'Filas por página',
@@ -217,22 +238,22 @@ const Produtos = () => {
   const columns = [
     {
       name: 'Código',
-      selector: row => row.cpdigo,
+      selector: row => row.codigo,
       sortable: true
     },
     {
-      name: 'Nome do produto',
+      name: 'Nome do Produto',
       selector: row => row.nome,
       sortable: true
     },
     {
-      name: 'Descrição',
+      name: 'Descrição do Produto',
       selector: row => row.descricao,
       sortable: true
     },
     {
-      name: 'Preço',
-      selector: row => row.preco,
+      name: 'Preço do Produto',
+      selector: row =>'R$ '+ parseFloat(row.preco).toFixed(2),
       sortable: true
     },
     {
@@ -240,22 +261,20 @@ const Produtos = () => {
       cell: row => (
         <div>
           <Button variant="primary" size="sm" onClick={() => handleEdit(row)}>Editar</Button>{' '}
-          <Button variant="danger" size="sm" onClick={() => excluir(row.id)}>Excluir</Button>
+          <Button variant="danger" size="sm" onClick={() => handleShowExcluir(row.codigo)}>Excluir</Button>
         </div>
       )
     }
   ];
 
-
   return (
-
     <div>
       {alertMessage && (
         <Alert variant={alertVariant} onClose={() => setAlertMessage('')} dismissible>
           {alertMessage}
         </Alert>
       )}
-      <h1 style={{ textAlign: 'center' }} >Produtos</h1>
+      <h1 style={{ textAlign: 'center' }}>Produtos</h1>
       <Button variant="primary" onClick={handleNovoProduto}>
         Cadastrar Produto
       </Button>
@@ -270,8 +289,10 @@ const Produtos = () => {
               <Form.Control
                 type="text"
                 name="nome"
+                maxLength={100}
                 value={newProduto.nome}
                 onChange={handleChange}
+                required
                 autoFocus
               />
             </Form.Group>
@@ -280,6 +301,8 @@ const Produtos = () => {
               <Form.Control
                 as="textarea"
                 name="descricao"
+                required
+                maxLength={255}
                 value={newProduto.descricao}
                 onChange={handleChange}
               />
@@ -287,10 +310,13 @@ const Produtos = () => {
             <Form.Group controlId="formPreco">
               <Form.Label>Preço</Form.Label>
               <Form.Control
+              
                 type="number"
                 name="preco"
-                step="0.01"
                 min="0.01" 
+                step="0.01" 
+                required
+                max="99999999.99"
                 value={newProduto.preco}
                 onChange={handleChange}
               />
@@ -329,6 +355,7 @@ const Produtos = () => {
               <Form.Control
                 type="text"
                 name="nome"
+                maxLength={100}
                 value={editProduto.nome}
                 onChange={handleChangeEdit}
                 autoFocus
@@ -339,6 +366,7 @@ const Produtos = () => {
               <Form.Control
                 as="textarea"
                 name="descricao"
+                maxLength={255}
                 value={editProduto.descricao}
                 onChange={handleChangeEdit}
               />
@@ -348,13 +376,14 @@ const Produtos = () => {
               <Form.Control
                 type="number"
                 name="preco"
-                step="0.01"
-                min="0.01"
+                min="0.01" 
+                step="0.01" 
+                required
+                max="99999999.99"
                 value={editProduto.preco}
                 onChange={handleChangeEdit}
               />
             </Form.Group>
-            
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -366,11 +395,29 @@ const Produtos = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <Modal show={showExcluir} onHide={handleCloseDelete}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirmar Exclusão</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Tem certeza de que deseja excluir o produto de código: {produtoExcluir} ? </p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseDelete}>
+            Cancelar
+          </Button>
+          <Button variant="danger" onClick={excluir}>
+            Confirmar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
       <input type="text" style={{ marginLeft: '75%' }} placeholder="Pesquisar..." onChange={handleFilter} />
       <div className="mt-1">
         {records.length === 0 ? (
-             <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <h6 className="">Não há dados disponíveis.</h6>
+          <div style={{ textAlign: 'center', marginTop: '20px' }}>
+            <h6 className="">Não há dados disponíveis.</h6>
           </div>
         ) : (
           <DataTable

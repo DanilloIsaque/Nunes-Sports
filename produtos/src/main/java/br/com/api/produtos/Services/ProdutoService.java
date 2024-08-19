@@ -4,6 +4,7 @@ package br.com.api.produtos.Services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import br.com.api.produtos.DAO.ProdutoDAO;
 import br.com.api.produtos.Model.Produto;
@@ -35,14 +36,11 @@ public class ProdutoService {
         return mensagem;
     }
     
-    public MensagemDTO excluirProduto(Long id) {
-        MensagemDTO mensagem = new MensagemDTO();
-        Optional<Produto> optionalProduto = dao.findById(id);
-            Produto produto = optionalProduto.get();
-            dao.delete(produto);
-            mensagem.setMensagem("Produto excluído com sucesso.");
-    
-        return mensagem;
+    public MensagemDTO excluirProduto(Integer codigo) {
+       Produto produto = dao.findById(codigo)
+        .orElseThrow(() -> new NoSuchElementException("Produto não encontrado com o código " + codigo));
+    dao.delete(produto);
+    return new MensagemDTO("Produto Excluído com sucesso.", null);
     }
 
     public List<Produto> listarProdutos() {
